@@ -38,8 +38,8 @@ int CCPUUsage::GetCPUUsageByGetSystemTimes()
 	}
 	else
 	{
-		//£¨×ÜµÄÊ±¼ä-¿ÕÏĞÊ±¼ä£©/×ÜµÄÊ±¼ä=Õ¼ÓÃcpuµÄÊ±¼ä¾ÍÊÇÊ¹ÓÃÂÊ
-		cpu_usage = static_cast<int>(abs((kernel + user - idle) * 100 / (kernel + user)));
+		//ï¼ˆæ€»çš„æ—¶é—´-ç©ºé—²æ—¶é—´ï¼‰/æ€»çš„æ—¶é—´=å ç”¨cpuçš„æ—¶é—´å°±æ˜¯ä½¿ç”¨ç‡
+		cpu_usage = static_cast<int>(abs((kernel + user - idle) / (kernel + user) * 100 ));
 	}
 	m_preidleTime = idleTime;
 	m_prekernelTime = kernelTime;
@@ -56,7 +56,7 @@ int CCPUUsage::GetCPUUsageByPdh()
 	DWORD counterType;
 	PDH_RAW_COUNTER rawData;
 
-	PdhOpenQuery(NULL, 0, &hQuery);//¿ªÊ¼²éÑ¯
+	PdhOpenQuery(NULL, 0, &hQuery);//å¼€å§‹æŸ¥è¯¢
 	const wchar_t* query_str{};
 	if (theApp.m_win_version.GetMajorVersion() >= 10)
 		query_str = L"\\Processor Information(_Total)\\% Processor Utility";
@@ -66,18 +66,18 @@ int CCPUUsage::GetCPUUsageByPdh()
 	PdhCollectQueryData(hQuery);
 	PdhGetRawCounterValue(hCounter, &counterType, &rawData);
 
-	if (m_first_get_CPU_utility) {//ĞèÒª»ñµÃÁ½´ÎÊı¾İ²ÅÄÜ¼ÆËãCPUÊ¹ÓÃÂÊ
+	if (m_first_get_CPU_utility) {//éœ€è¦è·å¾—ä¸¤æ¬¡æ•°æ®æ‰èƒ½è®¡ç®—CPUä½¿ç”¨ç‡
 		cpu_usage = 0;
 		m_first_get_CPU_utility = false;
 	}
 	else {
 		PDH_FMT_COUNTERVALUE fmtValue;
-		PdhCalculateCounterFromRawValue(hCounter, PDH_FMT_DOUBLE, &rawData, &m_last_rawData, &fmtValue);//¼ÆËãÊ¹ÓÃÂÊ
-		cpu_usage = fmtValue.doubleValue;//´«³öÊı¾İ
+		PdhCalculateCounterFromRawValue(hCounter, PDH_FMT_DOUBLE, &rawData, &m_last_rawData, &fmtValue); // è®¡ç®—ä½¿ç”¨ç‡
+		cpu_usage = fmtValue.doubleValue;//ä¼ å‡ºæ•°æ®
 		if (cpu_usage > 100)
 			cpu_usage = 100;
 	}
-	m_last_rawData = rawData;//±£´æÉÏÒ»´ÎÊı¾İ
-	PdhCloseQuery(hQuery);//¹Ø±Õ²éÑ¯
+	m_last_rawData = rawData;//ä¿å­˜ä¸Šä¸€æ¬¡æ•°æ®
+	PdhCloseQuery(hQuery);//å…³é—­æŸ¥è¯¢
 	return cpu_usage;
 }
